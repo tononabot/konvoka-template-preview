@@ -1,127 +1,89 @@
 from pathlib import Path
-from html import escape as e
+from html import escape as h
 import json
 
 ROOT = Path(__file__).parent
-EVENT = {
-    'title': 'Track Day Motos — Autódromo de Tocancipá',
-    'slug': 'track-day-motos-autodromo-de-tocancipa-julio-2026',
-    'date': '12 de julio de 2026',
-    'iso': '2026-07-12T08:00:00-05:00',
-    'time': '08:00 – 17:00',
-    'venue': 'Autódromo de Tocancipá',
-    'city': 'Tocancipá, Cundinamarca',
-    'organizer': 'Organizador demo Konvoka',
-    'cover': 'Imagen/cover configurada por el organizer',
-    'video': 'Video promocional configurado por el organizer',
-    'description': 'Data demo para validar cómo una landing pública premium puede transformar el mismo evento sin romper SEO, AI SEO ni checkout.',
+BASE = {
+    'date': '12 de julio de 2026', 'iso': '2026-07-12T08:00:00-05:00', 'time': '08:00 – 17:00',
+    'organizer': 'Organizador del evento', 'description': 'Landing pública del evento con información, entradas y checkout oficial.'
 }
-
 TEMPLATES = [
-    dict(id='classic', short='Classic', name='Classic Editorial', theme='light', accent='#4f46e5', archetype='Concierge editorial', hero='Una página sobria que convierte información dispersa en una invitación clara.', layout='dossier', visual='timeline', sections=['Resumen', 'Detalles', 'Entradas', 'Ubicación'], chips=['Cover arriba', 'Datos esenciales', 'FAQ visible'], insight='Apple/Stripe: silencio visual, tipografía fuerte, CTA reservado.'),
-    dict(id='racing', short='Racing', name='Racing Pit Lane', theme='dark', accent='#ef4444', archetype='Pit lane cinematic', hero='La emoción de entrar a pista, con seguridad y logística antes de comprar.', layout='pit', visual='track', sections=['Briefing', 'Agenda', 'Seguridad', 'Tickets'], chips=['Pista visual', 'Reglas claras', 'CTA agresivo'], insight='BMW/F1: ángulos, contraste, specs y sensación de paddock.'),
-    dict(id='conference', short='Conference', name='Conference Intelligence', theme='ink', accent='#2563eb', archetype='Executive agenda', hero='Un evento profesional presentado como agenda curada, no como flyer.', layout='agenda', visual='grid', sections=['Tema', 'Agenda', 'Hosts', 'Registro'], chips=['Pase digital', 'Programa', 'Datos para búsqueda'], insight='TED/Stripe: editorial + agenda extractable para SEO/LLMs.'),
-    dict(id='workshop', short='Workshop', name='Workshop Studio', theme='paper', accent='#7c3aed', archetype='Learning studio', hero='Un taller se entiende mejor como transformación: llegas con dudas, sales con una habilidad.', layout='notebook', visual='badge', sections=['Aprenderás', 'Nivel', 'Materiales', 'Entradas'], chips=['Outcomes', 'Requisitos', 'Fit antes de pagar'], insight='Notion/Coursera-style: módulos, checklist y progreso.'),
-    dict(id='music', short='Music', name='Music Backstage', theme='neon', accent='#ec4899', archetype='Backstage pass', hero='Una landing que se siente como entrar por backstage: lineup, venue y ticket al alcance.', layout='poster', visual='stage', sections=['Lineup', 'Venue', 'Galería', 'Boletas'], chips=['Poster hero', 'Lineup', 'Compra social'], insight='DICE/Spotify/Runway: oscuro, poster, waveform y energía social.'),
-    dict(id='meetup', short='Meetup', name='Community Signal', theme='warm', accent='#0891b2', archetype='Community map', hero='El usuario necesita sentir quién convoca, por qué vale llegar y qué pasa al entrar.', layout='map', visual='pulse', sections=['Propósito', 'Dinámica', 'Organizer', 'Registro'], chips=['Tono humano', 'Mapa social', 'Baja fricción'], insight='Luma/Airbnb: confianza, comunidad y tarjetas cálidas.'),
-    dict(id='premium', short='Premium', name='Premium Black Card', theme='luxury', accent='#b45309', archetype='Private invitation', hero='Menos ruido, más estatus: la experiencia se siente valiosa antes del checkout.', layout='invite', visual='crest', sections=['Experiencia', 'Dress code', 'Lugar', 'Accesos'], chips=['Black card', 'Editorial VIP', 'Sin falsa escasez'], insight='Apple luxury/BMW: escena oscura, detalles finos y copy mínimo.'),
-    dict(id='family', short='Family', name='Family Day Map', theme='sun', accent='#16a34a', archetype='Local fair map', hero='Una página amable para familias: horarios, actividades y ubicación sin fricción.', layout='playmap', visual='map', sections=['Actividades', 'Horarios', 'Mapa', 'Entradas'], chips=['Muy legible', 'Touch friendly', 'Mapa primero'], insight='Airbnb/parks: claridad, tarjetas redondas y colores amables.'),
-    dict(id='sports', short='Sports', name='Sports Bracket', theme='sport', accent='#ea580c', archetype='Tournament command center', hero='Categorías, reglas y agenda como tablero competitivo para decidir rápido.', layout='scoreboard', visual='track', sections=['Categorías', 'Reglas', 'Agenda', 'Inscripción'], chips=['Marcador', 'Bracket', 'Reglas visibles'], insight='ESPN/Nike: tablero, números grandes, ritmo competitivo.'),
-    dict(id='minimal_checkout', short='Fast', name='Fast Checkout Sheet', theme='clean', accent='#0f172a', archetype='Commerce-first', hero='Para tráfico de WhatsApp o Instagram: primero tickets, luego contexto suficiente.', layout='commerce', visual='pulse', sections=['Tickets', 'Datos', 'Mapa', 'FAQ'], chips=['Tickets arriba', 'Menos lectura', 'CTA persistente'], insight='Shopify/Apple checkout: foco extremo en compra y confianza.'),
+    {'id':'classic','short':'Classic','name':'Classic Editorial','tone':'Invitación editorial','event':'Cena privada de founders — Bogotá','venue':'Casa República','city':'Bogotá','theme':'classic','accent':'#5b5bd6','tickets':[('Invitado','Acceso + networking','$180.000'),('Mesa sponsor','Mesa reservada + branding','$900.000')]},
+    {'id':'racing','short':'Racing','name':'Racing Pit Lane','tone':'Track day de alto desempeño','event':'Track Day Motos — Tocancipá','venue':'Autódromo de Tocancipá','city':'Tocancipá','theme':'racing','accent':'#ff3434','tickets':[('General','Acceso a pista + zona común','$120.000'),('Paddock','Briefing + paddock prioritario','$220.000')]},
+    {'id':'conference','short':'Conference','name':'Conference Intelligence','tone':'Summit ejecutivo','event':'AI Ops Summit Latam 2026','venue':'Ágora Bogotá','city':'Bogotá','theme':'conference','accent':'#3b82f6','tickets':[('Conference Pass','Charlas + expo hall','$340.000'),('Executive','Workshops + lounge','$720.000')]},
+    {'id':'workshop','short':'Workshop','name':'Workshop Studio','tone':'Aprendizaje práctico','event':'Workshop No‑Code Automations','venue':'Konvoka Studio','city':'Medellín','theme':'workshop','accent':'#7c3aed','tickets':[('Learner','Taller + materiales','$160.000'),('Team Pack','3 accesos + Q&A','$420.000')]},
+    {'id':'music','short':'Music','name':'Music Backstage','tone':'Noche de club y lineup','event':'Noches Backstage: Indie & Synth','venue':'Bodega Cultural','city':'Bogotá','theme':'music','accent':'#f72585','tickets':[('General','Ingreso al venue','$90.000'),('Backstage VIP','Front stage + meet & greet','$260.000')]},
+    {'id':'meetup','short':'Meetup','name':'Community Signal','tone':'Encuentro de comunidad','event':'Founders & Builders Meetup','venue':'Casa Creator','city':'Bogotá','theme':'meetup','accent':'#0891b2','tickets':[('Community','Networking + bebidas','$45.000'),('Host Table','Mesa compartida + intros','$120.000')]},
+    {'id':'premium','short':'Premium','name':'Premium Black Card','tone':'Invitación privada','event':'Gala Black Card — Cena & Subasta','venue':'Club El Nogal','city':'Bogotá','theme':'premium','accent':'#c79a48','tickets':[('Invitado','Cena + ceremonia','$380.000'),('Mesa VIP','Mesa privada 6 personas','$1.800.000')]},
+    {'id':'family','short':'Family','name':'Family Day Map','tone':'Plan familiar claro','event':'Family Day en el Parque','venue':'Parque Museo Chicó','city':'Bogotá','theme':'family','accent':'#22a45d','tickets':[('Niño','Actividades guiadas','$35.000'),('Familia','2 adultos + 2 niños','$110.000')]},
+    {'id':'sports','short':'Sports','name':'Sports Bracket','tone':'Competencia urbana','event':'Copa Urbana 5K & Teams','venue':'Parque Simón Bolívar','city':'Bogotá','theme':'sports','accent':'#ff7a1a','tickets':[('Runner','Kit + chip','$75.000'),('Team','4 corredores + carpa','$260.000')]},
+    {'id':'minimal_checkout','short':'Fast','name':'Fast Checkout Sheet','tone':'Compra directa','event':'Masterclass Express: Ventas por WhatsApp','venue':'Online en vivo','city':'Latam','theme':'fast','accent':'#111827','tickets':[('Acceso','Clase en vivo','$39.000'),('Acceso + replay','Grabación 30 días','$69.000')]},
 ]
 
-EVENTS = {
-    'classic': ('Cena privada de founders — Bogotá', 'Casa República', 'Bogotá, Colombia', [('General', 'Invitación + networking', '$180.000'), ('Mesa sponsor', 'Mesa reservada + branding', '$900.000')]),
-    'racing': ('Track Day Motos — Autódromo de Tocancipá', 'Autódromo de Tocancipá', 'Tocancipá, Cundinamarca', [('General', 'Acceso a pista + zona común', '$120.000'), ('Paddock', 'Zona paddock + briefing prioritario', '$220.000')]),
-    'conference': ('AI Ops Summit Latam 2026', 'Centro de Convenciones Ágora', 'Bogotá, Colombia', [('Conference Pass', 'Charlas + expo hall', '$340.000'), ('Executive', 'Workshops + lounge', '$720.000')]),
-    'workshop': ('Workshop No-Code Automations', 'Konvoka Studio', 'Medellín, Colombia', [('Learner', 'Taller + materiales', '$160.000'), ('Team Pack', '3 accesos + sesión Q&A', '$420.000')]),
-    'music': ('Noches Backstage: Indie & Synth', 'Bodega Cultural', 'Bogotá, Colombia', [('General', 'Ingreso al venue', '$90.000'), ('Backstage VIP', 'Front stage + meet & greet', '$260.000')]),
-    'meetup': ('Founders & Builders Meetup', 'Casa Creator', 'Bogotá, Colombia', [('Community', 'Networking + bebidas', '$45.000'), ('Host Table', 'Mesa compartida + intros', '$120.000')]),
-    'premium': ('Gala Black Card — Cena & Subasta', 'Club El Nogal', 'Bogotá, Colombia', [('Invitado', 'Cena + ceremonia', '$380.000'), ('Mesa VIP', 'Mesa privada 6 personas', '$1.800.000')]),
-    'family': ('Family Day en el Parque', 'Parque Museo Chicó', 'Bogotá, Colombia', [('Niño', 'Actividades guiadas', '$35.000'), ('Familia', '2 adultos + 2 niños', '$110.000')]),
-    'sports': ('Copa Urbana 5K & Teams', 'Parque Simón Bolívar', 'Bogotá, Colombia', [('Runner', 'Kit + chip', '$75.000'), ('Team', '4 corredores + carpa', '$260.000')]),
-    'minimal_checkout': ('Masterclass Express: Ventas por WhatsApp', 'Online en vivo', 'Latam', [('Acceso', 'Clase en vivo', '$39.000'), ('Acceso + replay', 'Clase + grabación 30 días', '$69.000')]),
-}
+def ev(t):
+    d = dict(BASE); d.update(t); return d
 
-def event_for(t):
-    title, venue, city, tickets = EVENTS.get(t['id'], (EVENT['title'], EVENT['venue'], EVENT['city'], [('General','Acceso estándar','$120.000'),('VIP','Acceso preferente','$220.000')]))
-    ev = dict(EVENT)
-    ev.update(title=title, venue=venue, city=city, tickets=tickets)
-    return ev
+def checkout(t, compact=False):
+    rows = ''.join(f'<label class="ticket-row"><span><b>{h(n)}</b><small>{h(desc)}</small></span><strong>{h(price)}</strong><input type="number" min="0" max="8" value="{1 if i==0 else 0}" aria-label="Cantidad {h(n)}"></label>' for i,(n,desc,price) in enumerate(t['tickets']))
+    cls = 'checkout compact' if compact else 'checkout'
+    return f'<form class="{cls}" aria-label="Seleccionar entradas"><div class="checkout-title"><span>Entradas</span><strong>{h(t["event"])}</strong></div>{rows}<button class="cta" type="button" data-open-modal>Asegurar mi lugar</button><p>Selecciona tus entradas y continúa al pago seguro.</p></form>'
 
-def render_tickets(t):
-    ev = event_for(t)
-    labels = []
-    for i, (name, desc, price) in enumerate(ev['tickets']):
-        labels.append(f'<label><span><b>{e(name)}</b><small>{e(desc)}</small></span><strong>{e(price)}</strong><input type="number" min="0" max="6" value="{1 if i == 0 else 0}" aria-label="Cantidad {e(name)}"></label>')
-    return '<form class="ticket-panel" aria-label="Selector de tickets demo"><div class="ticket-head"><span>Entradas configuradas</span><strong>Checkout Konvoka</strong></div>' + ''.join(labels) + '<button class="cta" type="button" data-open-modal>Asegurar mi lugar</button><p>Usa tickets, precios, cupos, descuentos y reglas reales del backend. El template no inventa data.</p></form>'
+def mini_nav(cur):
+    links = ''.join(f'<a class="{("on" if x["id"]==cur else "")}" href="../{x["id"]}/">{h(x["short"])}</a>' for x in TEMPLATES)
+    return f'<aside class="preview-switch"><details><summary>Ver otros diseños</summary><nav aria-label="Otros templates">{links}</nav></details></aside>'
 
-def nav(current):
-    return '<nav class="top" aria-label="Templates"><a class="brand" href="../../">Konvoka<span>VIP templates</span></a><div class="rail">' + ''.join(
-        f'<a class="{ "on" if t["id"] == current else "" }" href="../{t["id"]}/">{e(t["short"])}</a>' for t in TEMPLATES
-    ) + '</div></nav>'
+def svg(kind):
+    if kind=='track': body='<path d="M30 210 C70 50 165 42 198 120 C226 184 292 156 330 54"/><circle cx="74" cy="158" r="16"/><circle cx="198" cy="120" r="18"/><circle cx="306" cy="82" r="14"/><text x="35" y="42">GRID  /  PIT  /  LAP</text>'
+    elif kind=='music': body='<path d="M42 215 L90 82 L160 160 L236 70 L318 214"/><rect x="74" y="136" width="26" height="62"/><rect x="150" y="104" width="30" height="94"/><rect x="250" y="126" width="26" height="72"/><text x="38" y="46">BACKSTAGE</text>'
+    elif kind=='agenda': body=''.join(f'<rect x="{38+(i%2)*148}" y="{50+(i//2)*48}" width="118" height="32" rx="4"/>' for i in range(6))+'<path d="M180 46 V220"/><text x="38" y="34">AGENDA</text>'
+    elif kind=='map': body='<path d="M52 82 C118 28 150 136 190 84 C244 20 292 118 330 64 M56 200 C118 138 176 226 236 158 C272 118 304 152 330 118"/><circle cx="90" cy="82" r="14"/><circle cx="190" cy="84" r="16"/><circle cx="304" cy="118" r="13"/><text x="42" y="42">MAPA</text>'
+    elif kind=='badge': body='<path d="M180 28 L302 94 L280 218 L180 246 L80 218 L58 94 Z"/><circle cx="180" cy="100" r="32"/><path d="M110 146 H252 M110 174 H226 M110 202 H196"/><text x="126" y="54">STUDIO</text>'
+    elif kind=='crest': body='<path d="M180 28 L296 96 V190 L180 244 L64 190 V96 Z"/><path d="M180 72 L244 108 V170 L180 206 L116 170 V108 Z"/><text x="130" y="158">VIP</text>'
+    elif kind=='score': body='<rect x="38" y="48" width="284" height="160"/><path d="M40 116 H322 M132 48 V208 M226 48 V208"/><text x="58" y="94">05</text><text x="156" y="94">KM</text><text x="248" y="94">RUN</text>'
+    elif kind=='phone': body='<rect x="104" y="28" width="152" height="220" rx="26"/><path d="M128 82 H232 M128 128 H232 M128 174 H202"/><circle cx="180" cy="218" r="10"/><text x="104" y="18">FAST PASS</text>'
+    else: body='<path d="M66 200 C92 112 134 106 168 142 C204 180 254 148 306 74"/><circle cx="70" cy="194" r="13"/><circle cx="168" cy="142" r="16"/><circle cx="306" cy="74" r="13"/><text x="42" y="44">DOSSIER</text>'
+    return f'<svg class="art" viewBox="0 0 360 270" aria-hidden="true" focusable="false">{body}</svg>'
 
-def visual(t):
-    v = t['visual']
-    if v == 'track':
-        inner = '<path class="draw" d="M30 210 C64 82 142 56 192 126 C236 188 292 158 332 48"/><g><circle cx="64" cy="178" r="15"/><circle cx="194" cy="126" r="20"/><circle cx="304" cy="76" r="14"/></g><text x="34" y="42">PIT · GRID · CHECKOUT</text>'
-    elif v == 'stage':
-        inner = '<path class="draw" d="M40 218 L92 72 L178 160 L266 72 L322 218"/><g class="bars"><rect x="72" y="130" width="28" height="76"/><rect x="160" y="92" width="34" height="114"/><rect x="252" y="142" width="28" height="64"/></g><text x="42" y="46">BACKSTAGE PASS</text>'
-    elif v == 'grid':
-        inner = ''.join(f'<rect x="{40+(i%3)*90}" y="{58+(i//3)*54}" width="64" height="36" rx="4"/>' for i in range(9)) + '<path class="draw" d="M72 76 H252 M72 130 H252 M72 184 H252"/><text x="40" y="36">AGENDA SYSTEM</text>'
-    elif v == 'badge':
-        inner = '<path class="draw" d="M180 30 L300 92 L282 216 L180 244 L78 216 L60 92 Z"/><path d="M112 136 H248 M112 166 H224 M112 196 H196"/><circle cx="180" cy="96" r="30"/><text x="116" y="52">OUTCOMES</text>'
-    elif v == 'map':
-        inner = '<path class="draw" d="M50 80 C112 32 144 132 188 82 C238 26 292 104 324 62 M54 194 C116 138 176 226 238 154 C270 118 304 152 330 118"/><g><circle cx="88" cy="82" r="12"/><circle cx="188" cy="82" r="16"/><circle cx="304" cy="118" r="12"/></g><text x="44" y="38">ARRIVAL MAP</text>'
-    elif v == 'crest':
-        inner = '<path class="draw" d="M180 28 L294 94 V190 L180 242 L66 190 V94 Z"/><path d="M180 66 L250 106 V170 L180 204 L110 170 V106 Z"/><text x="135" y="152" class="crest">VIP</text>'
-    elif v == 'pulse':
-        inner = '<path class="draw" d="M34 142 H96 L124 98 L154 198 L186 62 L218 142 H326"/><g><circle cx="96" cy="142" r="12"/><circle cx="186" cy="62" r="16"/><circle cx="286" cy="142" r="12"/></g><text x="42" y="42">LIVE SIGNAL</text>'
-    else:
-        inner = '<path class="draw" d="M58 190 C92 118 132 106 166 142 C204 184 250 158 306 74"/><circle cx="70" cy="184" r="13"/><circle cx="166" cy="142" r="16"/><circle cx="306" cy="74" r="13"/><text x="42" y="44">EVENT DOSSIER</text>'
-    return f'<div class="signature" aria-hidden="true"><svg viewBox="0 0 360 270" focusable="false">{inner}</svg></div>'
+def facts(t):
+    return f'<ul class="facts"><li><span>Fecha</span><b>{t["date"]}</b></li><li><span>Hora</span><b>{t["time"]}</b></li><li><span>Lugar</span><b>{h(t["venue"])}</b></li></ul>'
 
-def config_blocks(ev):
-    blocks = [
-        ('Historia', ev['title'], ev['description']),
-        ('Media', ev['cover'], ev['video']),
-        ('Logística', f"{ev['date']} · {ev['time']}", f"{ev['venue']} · {ev['city']}"),
-        ('Organizer', ev['organizer'], 'Políticas, restricciones, agenda y FAQ salen de la configuración real.'),
-    ]
-    return ''.join(f'<article><span>{e(a)}</span><h3>{e(b)}</h3><p>{e(c)}</p></article>' for a,b,c in blocks)
+def schema(t):
+    offers=[{'@type':'Offer','name':n,'price':p.replace('$','').replace('.',''),'priceCurrency':'COP'} for n,_,p in t['tickets']]
+    return json.dumps({'@context':'https://schema.org','@type':'Event','name':t['event'],'startDate':t['iso'],'eventStatus':'https://schema.org/EventScheduled','eventAttendanceMode':'https://schema.org/OfflineEventAttendanceMode','location':{'@type':'Place','name':t['venue'],'address':t['city']},'organizer':{'@type':'Organization','name':t['organizer']},'offers':offers,'description':t['description']}, ensure_ascii=False)
 
-def story(t):
-    return f'''<section class="story story-{t['layout']}" aria-label="Experiencia temática">
-      <div class="story-copy"><p class="kicker">{e(t['archetype'])}</p><h2>{e(t['name'])} no es un cambio de color: es una escena distinta.</h2><p>{e(t['hero'])}</p></div>
-      <div class="modules">{''.join(f'<article><b>{i+1:02}</b><span>{e(s)}</span></article>' for i,s in enumerate(t['sections']))}</div>
-    </section>'''
+def layout(t):
+    i=t['id']
+    if i=='racing':
+        return f'<header class="race-hero"><div class="speed"><span>Track Day</span><h1>{h(t["event"])}</h1><p>Briefing, pista, paddock y acceso en una experiencia diseñada para pilotos que quieren claridad antes de llegar al autódromo.</p><a class="cta" href="#tickets">Asegurar mi lugar</a></div><div class="race-card">{svg("track")}<div class="lap"><b>08:00</b><span>Briefing obligatorio</span></div></div></header><section class="pit-grid"><article><b>01</b><h2>Briefing</h2><p>Reglas de pista, grupos y seguridad visibles antes de comprar.</p></article><article><b>02</b><h2>Tandas</h2><p>Horario y cupos por categoría según configuración del organizer.</p></article><article><b>03</b><h2>Paddock</h2><p>Accesos diferenciados, beneficios y restricciones por ticket.</p></article></section><section id="tickets" class="ticket-stage">{checkout(t)}</section>'
+    if i=='music':
+        return f'<header class="poster-hero"><div class="poster">{svg("music")}<p>Indie · Synth · Live set</p></div><div><p class="eyebrow">Backstage Pass</p><h1>{h(t["event"])}</h1><p>Lineup, venue, beneficios VIP y compra sin romper el mood de una noche de música.</p>{facts(t)}<a class="cta" href="#tickets">Asegurar mi lugar</a></div></header><section class="lineup"><h2>Lineup de la noche</h2><div><article><span>21:00</span><b>Warm-up set</b></article><article><span>22:30</span><b>Indie live</b></article><article><span>00:00</span><b>Synth closing</b></article></div></section><section id="tickets" class="ticket-stage dark">{checkout(t)}</section>'
+    if i=='conference':
+        return f'<header class="conf-hero"><p class="eyebrow">Executive agenda</p><h1>{h(t["event"])}</h1><p>Una página para tomar decisión rápido: tema, tracks, agenda y registro en estructura escaneable.</p>{checkout(t, True)}</header><section class="agenda"><h2>Programa</h2><ol><li><time>09:00</time><b>Keynote: operaciones con IA</b></li><li><time>11:00</time><b>Panel de líderes regionales</b></li><li><time>14:00</time><b>Workshops por track</b></li></ol>{svg("agenda")}</section>'
+    if i=='workshop':
+        return f'<header class="workshop-hero"><div><p class="eyebrow">Learning Studio</p><h1>{h(t["event"])}</h1><p>De la promesa a la habilidad: objetivos, materiales, nivel y acceso antes del checkout.</p></div>{svg("badge")}</header><section class="learn-path"><h2>Sales con esto listo</h2><article><b>1</b><span>Mapa del proceso</span></article><article><b>2</b><span>Automatización funcional</span></article><article><b>3</b><span>Checklist de despliegue</span></article></section><section id="tickets" class="notebook-buy">{checkout(t)}</section>'
+    if i=='meetup':
+        return f'<header class="meetup-hero"><div>{svg("map")}</div><div><p class="eyebrow">Community signal</p><h1>{h(t["event"])}</h1><p>Quién convoca, qué conversación abre y por qué vale salir de casa.</p>{facts(t)}</div></header><section class="people-flow"><h2>Momentos del encuentro</h2><div><span>Llegada</span><span>Ronda de intros</span><span>Mesas temáticas</span><span>Cierres útiles</span></div></section><section id="tickets" class="ticket-stage">{checkout(t)}</section>'
+    if i=='premium':
+        return f'<header class="black-card"><div class="seal">{svg("crest")}</div><p class="eyebrow">Private invitation</p><h1>{h(t["event"])}</h1><p>Una experiencia sobria, aspiracional y sin ruido: lugar, protocolo y accesos claros.</p><a class="cta" href="#tickets">Asegurar mi lugar</a></header><section class="vip-details"><article><span>Dress code</span><b>Formal / black</b></article><article><span>Experiencia</span><b>Cena, ceremonia y subasta</b></article><article><span>Lugar</span><b>{h(t["venue"])}</b></article></section><section id="tickets" class="black-checkout">{checkout(t)}</section>'
+    if i=='family':
+        return f'<header class="family-hero"><div><p class="eyebrow">Plan familiar</p><h1>{h(t["event"])}</h1><p>Una landing amable: edades, actividades, horarios, ubicación y compra sin letra pequeña.</p><a class="cta" href="#tickets">Asegurar mi lugar</a></div>{svg("map")}</header><section class="activity-map"><h2>Ruta del día</h2><article>Zona picnic</article><article>Taller niños</article><article>Show central</article><article>Punto de encuentro</article></section><section id="tickets" class="ticket-stage">{checkout(t)}</section>'
+    if i=='sports':
+        return f'<header class="score-hero"><div class="scoreboard">{svg("score")}</div><div><p class="eyebrow">Race command center</p><h1>{h(t["event"])}</h1><p>Categorías, reglas, kit, horarios y compra en un tablero competitivo.</p>{facts(t)}</div></header><section class="bracket"><h2>Categorías</h2><div><b>Individual</b><b>Teams</b><b>Elite</b><b>Recreativo</b></div></section><section id="tickets" class="ticket-stage">{checkout(t)}</section>'
+    if i=='minimal_checkout':
+        return f'<header class="fast-hero"><div>{checkout(t)}</div><div><p class="eyebrow">Compra directa</p><h1>{h(t["event"])}</h1><p>Diseñado para tráfico de WhatsApp/Instagram: tickets primero, contexto suficiente después.</p>{facts(t)}</div></header><section class="fast-proof"><h2>Antes de pagar</h2><p>Fecha, modalidad, precio, acceso y replay quedan visibles sin hacer scroll eterno.</p>{svg("phone")}</section>'
+    return f'<header class="editorial-hero"><p class="eyebrow">{h(t["tone"])}</p><h1>{h(t["event"])}</h1><p>Una invitación limpia y premium para eventos que necesitan presencia, claridad y checkout impecable.</p>{facts(t)}<a class="cta" href="#tickets">Asegurar mi lugar</a></header><section class="editorial-columns"><article><h2>La experiencia</h2><p>Contexto, lugar y expectativa editorial antes de elegir entrada.</p></article><article>{svg("dossier")}</article></section><section id="tickets" class="ticket-stage">{checkout(t)}</section>'
 
-def page(t):
-    ev = event_for(t)
-    ticket_html = render_tickets(t)
-    cards = ''.join(f'<li>{e(x)}</li>' for x in t['chips'])
-    offers = [{'@type': 'Offer', 'name': name, 'price': price.replace('$','').replace('.',''), 'priceCurrency': 'COP'} for name, _, price in ev['tickets']]
-    schema = json.dumps({'@context':'https://schema.org','@type':'Event','name':ev['title'],'eventStatus':'https://schema.org/EventScheduled','eventAttendanceMode':'https://schema.org/OfflineEventAttendanceMode','startDate':ev['iso'],'location':{'@type':'Place','name':ev['venue'],'address':ev['city']},'organizer':{'@type':'Organization','name':ev['organizer']},'offers':offers,'description':f"Preview temporal de template {t['name']} para landing de evento Konvoka."}, ensure_ascii=False)
-    return f'''<!doctype html><html lang="es-CO"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{e(t['name'])} · Konvoka VIP templates</title><meta name="description" content="Preview premium del template {e(t['name'])}: landing pública de evento con SEO, AI SEO, selector de tickets y checkout Konvoka."><link rel="canonical" href="https://tononabot.github.io/konvoka-template-preview/templates/{t['id']}/"><meta name="robots" content="noindex, follow"><meta property="og:title" content="{e(t['name'])} · Konvoka"><meta property="og:description" content="Template público de evento con diseño temático, ticket selector y checkout handoff."><meta property="og:type" content="website"><meta name="twitter:card" content="summary"><link rel="stylesheet" href="../../styles.css"><script type="application/ld+json">{schema}</script></head>
-<body class="theme-{t['theme']} tpl-{t['id']}" style="--accent:{t['accent']}"><a class="skip" href="#contenido">Saltar al contenido</a>{nav(t['id'])}<main id="contenido">
-<section class="preview-note"><strong>Preview temporal premium.</strong> Data demo temática; cada template cambia contenido, composición, narrativa, módulos y estética.</section>
-<header class="hero hero-{t['layout']}"><div class="hero-copy"><p class="kicker">{e(t['archetype'])}</p><h1>{e(ev['title'])}</h1><p class="lead">{e(t['hero'])}</p><dl class="facts"><div><dt>Fecha</dt><dd>{ev['date']}</dd></div><div><dt>Lugar</dt><dd>{e(ev['venue'])}</dd></div><div><dt>Organizer</dt><dd>{e(ev['organizer'])}</dd></div></dl><ul class="chips">{cards}</ul><a class="cta hero-cta" href="#tickets">Asegurar mi lugar</a></div>{visual(t)}<aside class="hero-checkout">{ticket_html}</aside></header>
-{story(t)}
-<section class="config" aria-labelledby="config-title"><div><p class="kicker">Organizer data-safe</p><h2 id="config-title">Todo lo que configura el organizer aparece, sin inventar nada.</h2><p>El diseño puede ser VIP, pero la fuente de verdad sigue siendo el evento: historia, media, logística, tickets, reglas, FAQ, formularios, descuentos y checkout.</p></div><div class="config-grid">{config_blocks(ev)}</div></section>
-<section id="tickets" class="checkout-zone" aria-labelledby="tickets-title"><div><p class="kicker">Mandatory checkout</p><h2 id="tickets-title">Seleccionar tickets → Asegurar mi lugar</h2><p>Este módulo es compartido por todos los templates. En producción usa IDs reales de tickets, disponibilidad y la ruta actual de checkout.</p></div>{ticket_html}</section>
-<section class="ai-seo"><h2>Resumen factual para SEO + AI SEO</h2><p>{e(ev['title'])} ocurre el {ev['date']} en {e(ev['venue'])}, {e(ev['city'])}. El template {e(t['name'])} conserva nombre, fecha, lugar, organizer, tickets, FAQ, ubicación y CTA de checkout en HTML semántico y Schema.org Event.</p><details><summary>¿Este template cambia los tickets?</summary><p>No. Solo cambia presentación. Tickets, precios, cupos y checkout salen del backend.</p></details><details><summary>¿Qué debe degradar si falta data?</summary><p>Media, lineup, speakers, dress code o actividades se ocultan si el organizer no los configuró. Nunca se rellenan con ficción.</p></details></section>
-</main><footer><a href="../../">Volver al índice</a><p>{e(t['insight'])}</p></footer><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden><div class="modal-card"><h2 id="modal-title">Checkout simulado</h2><p>En Konvoka real este paso conserva la selección y redirige/abre el checkout actual. Esta URL es solo preview visual.</p><button class="cta" data-close-modal>Cerrar</button></div></div><script src="../../script.js" defer></script></body></html>'''
-
+def page(t0):
+    t=ev(t0)
+    return f'''<!doctype html><html lang="es-CO"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{h(t['event'])} · {h(t['name'])}</title><meta name="description" content="{h(t['event'])}: fecha, lugar, entradas y checkout oficial del evento."><link rel="canonical" href="https://tononabot.github.io/konvoka-template-preview/templates/{t['id']}/"><meta name="robots" content="noindex, follow"><meta property="og:title" content="{h(t['event'])}"><meta property="og:description" content="Entradas y detalles oficiales del evento."><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><link rel="stylesheet" href="../../styles.css"><script type="application/ld+json">{schema(t)}</script></head><body class="page {t['theme']}" style="--accent:{t['accent']}"><a class="skip" href="#main">Saltar al contenido</a><main id="main">{layout(t)}<section class="event-info"><h2>Información del evento</h2><div><article><span>Fecha</span><b>{t['date']}</b></article><article><span>Hora</span><b>{t['time']}</b></article><article><span>Lugar</span><b>{h(t['venue'])}, {h(t['city'])}</b></article><article><span>Organiza</span><b>{h(t['organizer'])}</b></article></div></section></main><footer><p>{h(t['event'])}</p><a href="../../">Índice de previews</a></footer><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden><div class="modal-card"><h2 id="modal-title">Asegurar mi lugar</h2><p>Checkout simulado para preview. En producción continúa con la selección real de entradas en Konvoka.</p><button class="cta" data-close-modal>Cerrar</button></div></div><script src="../../script.js?v=2" defer></script></body></html>'''
 
 def index():
-    cards = ''.join(f'<article class="index-card theme-{t["theme"]}" style="--accent:{t["accent"]}"><span>{e(t["archetype"])}</span><h2>{e(t["name"])}</h2><p>{e(t["hero"])}</p><a class="cta" href="templates/{t["id"]}/">Ver template</a></article>' for t in TEMPLATES)
-    return f'''<!doctype html><html lang="es-CO"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Konvoka VIP template research preview</title><meta name="description" content="10 previews premium y temáticos para landings públicas de eventos Konvoka."><meta name="robots" content="noindex, follow"><link rel="stylesheet" href="styles.css"></head><body class="theme-clean"><a class="skip" href="#contenido">Saltar al contenido</a><main id="contenido" class="index"><p class="kicker">Research-led preview</p><h1>10 direcciones visuales VIP para un mismo evento Konvoka</h1><p class="lead">Ya no son skins de color: cada template tiene composición, narrativa, módulos y atmósfera propia, preservando SEO, AI SEO, tickets y “Asegurar mi lugar”.</p><div class="index-grid">{cards}</div></main><footer><p>Preview temporal. Data demo. No procesa pagos.</p></footer></body></html>'''
+    cards=''.join(f'<a class="index-card {t["theme"]}" style="--accent:{t["accent"]}" href="templates/{t["id"]}/"><span>{h(t["tone"])}</span><b>{h(t["name"])}</b><small>{h(t["event"])}</small></a>' for t in TEMPLATES)
+    return f'<!doctype html><html lang="es-CO"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Konvoka production-grade event templates</title><meta name="robots" content="noindex, follow"><meta name="description" content="Previews de landings de evento Konvoka con diseños temáticos production-grade."><link rel="stylesheet" href="styles.css"></head><body class="page index-page"><main><header class="index-hero"><p class="eyebrow">Konvoka template lab</p><h1>Landings de evento con diseño real, no skins.</h1><p>Cada preview usa estructura mobile, narrativa y componentes distintos. Todas conservan entradas y CTA “Asegurar mi lugar”.</p></header><section class="index-grid">{cards}</section></main></body></html>'
 
-(ROOT / 'index.html').write_text(index())
+(ROOT/'index.html').write_text(index())
 for t in TEMPLATES:
-    d = ROOT / 'templates' / t['id']
-    d.mkdir(parents=True, exist_ok=True)
-    (d / 'index.html').write_text(page(t))
-(ROOT / 'robots.txt').write_text('User-agent: *\nDisallow: /\n')
-(ROOT / 'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>')
-print(f'generated {len(TEMPLATES)} premium template pages')
+    d=ROOT/'templates'/t['id']; d.mkdir(parents=True, exist_ok=True); (d/'index.html').write_text(page(t))
+(ROOT/'robots.txt').write_text('User-agent: *\nDisallow: /\n')
+(ROOT/'sitemap.xml').write_text('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>')
+print('generated', len(TEMPLATES), 'production-grade pages')

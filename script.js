@@ -1,20 +1,28 @@
 (() => {
   const modal = document.querySelector('.modal');
-  const open = document.querySelector('[data-open-modal]');
+  const opens = [...document.querySelectorAll('[data-open-modal]')];
   const close = document.querySelector('[data-close-modal]');
-  if (!modal || !open || !close) return;
-  open.addEventListener('click', () => {
-    modal.hidden = false;
-    close.focus();
+  let lastTrigger = null;
+  if (!modal || !opens.length || !close) return;
+
+  opens.forEach((open) => {
+    open.addEventListener('click', () => {
+      lastTrigger = open;
+      modal.hidden = false;
+      close.focus();
+    });
   });
-  close.addEventListener('click', () => {
+
+  const closeModal = () => {
     modal.hidden = true;
-    open.focus();
-  });
+    if (lastTrigger) lastTrigger.focus();
+  };
+
+  close.addEventListener('click', closeModal);
   modal.addEventListener('click', (event) => {
-    if (event.target === modal) close.click();
+    if (event.target === modal) closeModal();
   });
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && !modal.hidden) close.click();
+    if (event.key === 'Escape' && !modal.hidden) closeModal();
   });
 })();
